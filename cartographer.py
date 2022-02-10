@@ -15,13 +15,41 @@ def initialChecks(srcDir, destDir):
         
         raise Exception("Destination directory does not exist. Please check config.json file and try again.")
 
+def writeSVG(contours, height, width, destDir, fileName):
 
-def getEdges(srcDir, fileName, destDir):
-    # Reading the image using imread() function
-    image = cv2.imread(srcDir + "/" + fileName)
+    fileName = os.path.splitext(fileName)[0]
+
+    # c = max(contours, key=cv2.contourArea) # max contour
+
+    # f = open(destDir + "/" + fileName + '.svg' , 'w+')
+    # f.write('<svg width="'+str(width)+'" height="'+str(height)+'" xmlns="http://www.w3.org/2000/svg">')
+    # f.write('<path d="M')
+
+    # for i in range(len(c)):
+    #     # print(c[i][0])
+    #     x, y = c[i][0]
+    #     # print(x)
+    #     f.write(str(x)+  ' ' + str(y)+' ')
+
+    # f.write('"/>')
+    # f.write('</svg>')
+    # f.close()
+
+    with open(destDir + "/" + fileName + ".svg", "w+") as f:
+        f.write(f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">')
+
+        for c in contours:
+            f.write('<path d="M')
+            for i in range(len(c)):
+                x, y = c[i][0]
+                f.write(f"{x} {y} ")
+            f.write('" style="stroke:black"/>')
+        f.write("</svg>")
+
+def getEdges(image, fileName, destDir):
     
     # # Extracting the height and width of an image
-    # h, w = image.shape[:2]
+    imgHeight, imgWidth = image.shape[:2]
     # # Displaying the height and width
     # print("Height = {},  Width = {}".format(h, w))
 
@@ -31,6 +59,7 @@ def getEdges(srcDir, fileName, destDir):
 
     # Convert to graycsale
     img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
     # Blur the image for better edge detection
     img_blur = cv2.GaussianBlur(img_gray, (3,3), 0)
 
@@ -44,12 +73,23 @@ def getEdges(srcDir, fileName, destDir):
     # Display Canny Edge Detection Image
     # cv2.imshow('Canny Edge Detection', edges)
     # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+
+    # Inverse B&W Image
+    # inverseImage = cv2.bitwise_not(edges)
+
+    # Display Inverse Image 
+    # cv2.imshow("Inverse Image", inverseImage)
+    # cv2.waitKey(0)
+
+    # contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_TC89_L1)
 
     # writing the image to a defined location
-    # cv2.imwrite(destDir + "/" +  fileName, edges)
-    inverseImage = cv2.bitwise_not(edges)
-    cv2.imwrite(destDir + "/" +  fileName, inverseImage)
+    # cv2.imwrite(destDir + "/" +  fileName, inverseImage)
+
+    writeSVG(contours, imgHeight, imgWidth, destDir, fileName)
+
+    # cv2.destroyAllWindows()
 
 def main():
 
@@ -74,10 +114,14 @@ def main():
         
         for fileName in fileList:
     
-            getEdges(srcDir, fileName, destDir)
+            # Reading the image using imread() function
+            image = cv2.imread(srcDir + "/" + fileName)            
+
+            getEdges(image, fileName, destDir)
     else:
 
-        print("No files found in source directory. Please check config.json file and try again.")
+        print("\nNo files found in source directory. Please check config.json file and try again.")
 
 if __name__ == "__main__":
     main()
+    print()
